@@ -50,5 +50,15 @@ module.exports = (sequelize, DataTypes) => {
     updatedAt: 'modified_at',
 
   });
+  User.associate = function(models) {
+
+    User.hasMany(models.rides, {
+      foreignKey: 'user_id',
+      as: 'rides',
+    });
+
+  };
+
+  return User;
 
 };

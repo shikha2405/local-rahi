@@ -174,31 +174,41 @@ exports.findRides = async (req, res) => {
   try {
     const { pickup, drop } = req.query;
 
-    let sql = `
-      SELECT * FROM rides
-      WHERE status = 'active'
-    `;
-
-    const values = [];
+    const where = {
+      status: 'active',
+    };
 
     if (pickup) {
-      sql += ` AND pickup_location LIKE ?`;
-      values.push(`%${pickup}%`);
+      where.pickup_location = {
+        [Op.like]: `%${pickup}%`,
+      };
     }
 
     if (drop) {
-      sql += ` AND drop_location LIKE ?`;
-      values.push(`%${drop}%`);
+      where.drop_location = {
+        [Op.like]: `%${drop}%`,
+      };
     }
 
-    sql += ` ORDER BY id DESC`;
+    const rides = await Ride.findAll({
+      where,
 
-    const { QueryTypes } = require('sequelize'); // or wherever you import sequelize
+      include: [
+        {
+          model: User,
+          as: 'user',
 
-    // Execute directly on Ride.sequelize
-    const rides = await Ride.sequelize.query(sql, { 
-      replacements: values,
-      type: QueryTypes.SELECT // This stops it from returning metadata, giving you just the data array
+          attributes: [
+            'id',
+            'first_name',
+            'last_name',
+            'phone',
+            'email',
+          ],
+        },
+      ],
+
+      order: [['id', 'DESC']],
     });
 
     res.status(200).json({

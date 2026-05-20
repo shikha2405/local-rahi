@@ -1,4 +1,5 @@
 'use strict';
+const { rides } = require(".");
 
 module.exports = (
   sequelize,
@@ -75,12 +76,10 @@ module.exports = (
 
   Ride.associate = function(models) {
 
-    Ride.belongsTo(
-      models.User,
-      {
-        foreignKey: 'user_id',
-      }
-    );
+    Ride.belongsTo(models.users, {
+      foreignKey: 'user_id',
+      as: 'user',
+    });
 
   };
 

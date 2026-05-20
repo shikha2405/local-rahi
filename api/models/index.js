@@ -17,5 +17,14 @@ db.sequelize = sequelize;
 
 db.users = require('./userModel')(sequelize, DataTypes);
 db.rides = require('./rideModel')(sequelize, DataTypes);
+Object.keys(db).forEach(modelName => {
+
+  if (db[modelName].associate) {
+
+    db[modelName].associate(db);
+
+  }
+
+});
 
 module.exports = db;
