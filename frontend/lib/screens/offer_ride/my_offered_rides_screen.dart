@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 
 import 'offer_ride_screen.dart';
+import '../../theme/app_theme.dart';
 
 class MyOfferedRidesScreen extends StatefulWidget {
   const MyOfferedRidesScreen({super.key});
@@ -44,7 +45,7 @@ class _MyOfferedRidesScreenState extends State<MyOfferedRidesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('My Offered Rides')),
+      appBar: AppTheme.appBar('Offer Ride'),
 
       body: isLoading
           ? const Center(child: CircularProgressIndicator())

@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
 import '../../services/api_service.dart';
+import '../../theme/app_theme.dart';
 
 class OfferRideScreen extends StatefulWidget {
   const OfferRideScreen({super.key});
@@ -166,10 +167,7 @@ class _OfferRideScreenState extends State<OfferRideScreen> {
 
     return Container(
       margin: const EdgeInsets.only(top: 5),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-      ),
+      decoration: AppTheme.cardDecoration,
       child: ListView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
@@ -205,16 +203,7 @@ class _OfferRideScreenState extends State<OfferRideScreen> {
     return TextField(
       controller: controller,
       onChanged: onChanged,
-      decoration: InputDecoration(
-        hintText: hint,
-        prefixIcon: Icon(icon),
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
-          borderSide: BorderSide.none,
-        ),
-      ),
+      decoration: AppTheme.inputDecoration(hint: hint, icon: icon),
     );
   }
 
@@ -228,10 +217,7 @@ class _OfferRideScreenState extends State<OfferRideScreen> {
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-          ),
+          decoration: AppTheme.cardDecoration,
           child: Row(
             children: [
               Icon(icon),
@@ -250,10 +236,7 @@ class _OfferRideScreenState extends State<OfferRideScreen> {
       child: Container(
         height: 42,
         width: 42,
-        decoration: BoxDecoration(
-          color: Colors.green,
-          borderRadius: BorderRadius.circular(12),
-        ),
+        decoration: AppTheme.cardDecoration,
         child: Icon(icon, color: Colors.white),
       ),
     );
@@ -262,13 +245,9 @@ class _OfferRideScreenState extends State<OfferRideScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: AppTheme.background,
 
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.white,
-        title: const Text('Offer Ride', style: TextStyle(color: Colors.black)),
-      ),
+      appBar: AppTheme.appBar('Offer Ride'),
 
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -334,10 +313,7 @@ class _OfferRideScreenState extends State<OfferRideScreen> {
             // SEATS
             Container(
               padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
-              ),
+              decoration: AppTheme.cardDecoration,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -402,21 +378,13 @@ class _OfferRideScreenState extends State<OfferRideScreen> {
               height: 58,
 
               child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                ),
+                style: AppTheme.primaryButton,
 
                 onPressed: isLoading ? null : offerRide,
 
                 child: isLoading
                     ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text(
-                        'Offer Ride',
-                        style: TextStyle(fontSize: 18, color: Colors.white),
-                      ),
+                    : const Text('Offer Ride', style: AppTheme.buttonText),
               ),
             ),
           ],

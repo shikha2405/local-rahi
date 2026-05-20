@@ -141,4 +141,17 @@ class ApiService {
 
     return data['predictions'];
   }
+
+  static Future<List<dynamic>> findRides({
+    String pickup = '',
+    String drop = '',
+  }) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/rides/find-rides?pickup=$pickup&drop=$drop'),
+    );
+
+    final data = jsonDecode(response.body);
+
+    return data['data'];
+  }
 }
