@@ -17,7 +17,8 @@ db.sequelize = sequelize;
 
 db.users = require('./userModel')(sequelize, DataTypes);
 db.rides = require('./rideModel')(sequelize, DataTypes);
-Object.keys(db).forEach(modelName => {
+db.ride_bookings = require('./rideBookingModel')(sequelize, DataTypes);
+Object.keys(db).forEach((modelName) => {
 
   if (db[modelName].associate) {
 
