@@ -155,7 +155,7 @@ class _FindRideScreenState extends State<FindRideScreen> {
     final String completedRides = ride['rides']?.toString() ?? '0';
     final String pickupLoc =
         ride['pickup'] ?? ride['pickup_location'] ?? 'Unknown';
-    final String dropLoc = ride['drop'] ?? ride['drop_location'] ?? 'Unknown';
+    final String dropLoc = ride['drop_location'] ?? 'Unknown';
     final String pTime = ride['trip_time'] ?? ride['trip_time'] ?? '--:--';
     final String dTime = ride['drop_time'] ?? ride['dropTime'] ?? '--:--';
     final String price = ride['price_per_seat']?.toString() ?? '0';

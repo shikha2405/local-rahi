@@ -37,6 +37,11 @@ module.exports = (
         allowNull: false,
       },
 
+      total_seats: {
+        type: DataTypes.INTEGER,
+        defaultValue: 1,
+      },
+
       available_seats: {
         type: DataTypes.INTEGER,
         defaultValue: 1,
@@ -55,6 +60,7 @@ module.exports = (
       status: {
         type: DataTypes.ENUM(
           'active',
+          'started',
           'completed',
           'cancelled'
         ),

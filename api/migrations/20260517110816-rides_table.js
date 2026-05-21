@@ -73,6 +73,14 @@ module.exports = {
 
         },
 
+        total_seats: {
+
+          type: Sequelize.INTEGER,
+
+          defaultValue: 1,
+
+        },
+
         available_seats: {
 
           type: Sequelize.INTEGER,
@@ -101,6 +109,7 @@ module.exports = {
 
           type: Sequelize.ENUM(
             'active',
+            'started',
             'completed',
             'cancelled'
           ),
