@@ -8,7 +8,8 @@ const {
   offerRide,
   getMyRides,
   findRides,
-  getRideDetails
+  getRideDetails,
+  startRide
 } = require(
   '../controllers/rideController'
 );
@@ -24,6 +25,11 @@ router.get(
 router.get(
   '/:ride_id',
   getRideDetails
+);
+
+router.put(
+  '/start/:ride_id',
+  startRide
 );
 
 router.get('/find-rides', findRides);

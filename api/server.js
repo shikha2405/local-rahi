@@ -12,6 +12,7 @@ const authRoutes = require('./routes/authRoutes');
 const placeRoutes = require('./routes/placeRoutes');
 const rideRoutes = require('./routes/rideRoutes');
 const rideBookingRoutes = require('./routes/rideBookingRoutes');
+const rideRatingRoutes = require('./routes/rideRatingRoutes');
 
 
 const app = express();
@@ -26,6 +27,8 @@ app.use('/api/auth', authRoutes);
 
 app.use('/api/rides', rideRoutes);
 app.use('/api/ride-bookings', rideBookingRoutes);
+app.use('/api/ride-ratings', rideRatingRoutes);
+
 db.sequelize.sync().then(() => {
 
   app.listen(process.env.PORT, () => {

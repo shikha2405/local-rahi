@@ -405,3 +405,85 @@ exports.getRideDetails = async (req, res) => {
   }
 
 };
+
+exports.startRide = async (req, res) => {
+
+  try {
+
+    const { ride_id } = req.params;
+
+    const ride = await Ride.findByPk(ride_id);
+
+    if (!ride) {
+
+      return res.status(404).json({
+
+        success: false,
+        message: 'Ride not found',
+
+      });
+
+    }
+
+    // CHECK ALREADY STARTED
+
+    if (ride.status === 'started') {
+
+      return res.status(400).json({
+
+        success: false,
+        message: 'Ride already started',
+
+      });
+
+    }
+
+    // CHECK COMPLETED
+
+    if (ride.status === 'completed') {
+
+      return res.status(400).json({
+
+        success: false,
+        message: 'Ride already completed',
+
+      });
+
+    }
+
+    // Create Start Ride API
+
+    ride.status = 'started';
+
+    await ride.save();
+
+    res.status(200).json({
+
+      success: true,
+
+      message: 'Ride started successfully',
+
+      data: {
+
+        ride_id: ride.id,
+
+        ride_status: ride.status,
+
+      },
+
+    });
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+
+      success: false,
+      message: 'Failed to start ride',
+
+    });
+
+  }
+
+};

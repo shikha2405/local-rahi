@@ -6,7 +6,6 @@ import '../services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'home_screen.dart';
 import '../widgets/auth_header.dart';
-import '../widgets/common_button.dart';
 
 class OtpScreen extends StatefulWidget {
   final String phone;
