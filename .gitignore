@@ -1,3 +1,11 @@
 # User specific & automatically generated files #
 #################################################
 /api/node_modules/
+# Ignore backend node_modules
+api/node_modules/
+
+# Ignore frontend node_modules
+frontend/node_modules/
+
+# Optional: To catch any other node_modules anywhere in the project
+**/node_modules/**

@@ -90,6 +90,10 @@ module.exports = (
       foreignKey: 'ride_id',
       as: 'bookings',
     });
+    Ride.hasMany(models.rideRatings, {
+      foreignKey: 'ride_id',
+      as: 'rideRatings',
+    });
 
   };
 

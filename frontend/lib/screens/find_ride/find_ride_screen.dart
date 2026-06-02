@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart'; // Imported your ApiService
 import '../../theme/app_theme.dart';
+import '../book_ride/book_ride_screen.dart';
 
 class FindRideScreen extends StatefulWidget {
   const FindRideScreen({super.key});
@@ -12,28 +13,23 @@ class FindRideScreen extends StatefulWidget {
 class _FindRideScreenState extends State<FindRideScreen> {
   final pickupController = TextEditingController();
   final dropController = TextEditingController();
+  int? requiredSeats;
 
   DateTime? selectedDate;
   TimeOfDay? selectedTime;
 
-  // Replaced dummy data with a dynamic list and loading boolean
   List rides = [];
   bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    fetchRides();
-
-    // Hook up text fields to query data reactively as you type
-    pickupController.addListener(fetchRides);
-    dropController.addListener(fetchRides);
+    rides = [];
+    isLoading = false;
   }
 
   @override
   void dispose() {
-    pickupController.removeListener(fetchRides);
-    dropController.removeListener(fetchRides);
     pickupController.dispose();
     dropController.dispose();
     super.dispose();
@@ -42,9 +38,19 @@ class _FindRideScreenState extends State<FindRideScreen> {
   Future<void> fetchRides() async {
     // Keep internal loading handling robust
     try {
+      if (pickupController.text.trim().isEmpty ||
+          dropController.text.trim().isEmpty ||
+          selectedDate == null ||
+          selectedTime == null ||
+          requiredSeats == null) {
+        return;
+      }
       final data = await ApiService.findRides(
         pickup: pickupController.text,
         drop: dropController.text,
+        //date: pickDate,
+        // time: selectedTime!.format(context),
+        // seats: requiredSeats!,
       );
 
       if (!mounted) return;
@@ -73,7 +79,6 @@ class _FindRideScreenState extends State<FindRideScreen> {
       setState(() {
         selectedDate = picked;
       });
-      fetchRides();
     }
   }
 
@@ -87,7 +92,6 @@ class _FindRideScreenState extends State<FindRideScreen> {
       setState(() {
         selectedTime = picked;
       });
-      fetchRides();
     }
   }
 
@@ -150,14 +154,19 @@ class _FindRideScreenState extends State<FindRideScreen> {
   Widget rideCard(Map ride) {
     // Added safe database key fallbacks (??) to prevent NoSuchMethodErrors
     // if your backend serves properties with snake_case variations.
-    final String name = ride['name'] ?? 'Driver';
-    final String rating = ride['rating']?.toString() ?? '5.0';
-    final String completedRides = ride['rides']?.toString() ?? '0';
+    final user = ride['user'];
+
+    final String name = '${user['first_name'] ?? ''} ${user['last_name'] ?? ''}'
+        .trim();
+
+    final String rating = ride['average_rating']?.toString() ?? '5.0';
+    final String completedRides =
+        ride['total_completed_rides']?.toString() ?? '0';
     final String pickupLoc =
         ride['pickup'] ?? ride['pickup_location'] ?? 'Unknown';
     final String dropLoc = ride['drop_location'] ?? 'Unknown';
     final String pTime = ride['trip_time'] ?? ride['trip_time'] ?? '--:--';
-    final String dTime = ride['drop_time'] ?? ride['dropTime'] ?? '--:--';
+    final String trip_date = ride['trip_date'] ?? ride['trip_date'] ?? '--:--';
     final String price = ride['price_per_seat']?.toString() ?? '0';
     final String seats = ride['available_seats']?.toString() ?? '0';
 
@@ -213,14 +222,14 @@ class _FindRideScreenState extends State<FindRideScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  pickupLoc,
+                  dropLoc,
                   style: const TextStyle(
                     fontWeight: FontWeight.w500,
                     fontSize: 16,
                   ),
                 ),
               ),
-              Text(pTime, style: AppTheme.subtitle),
+              Text(trip_date, style: AppTheme.subtitle),
             ],
           ),
 
@@ -238,14 +247,14 @@ class _FindRideScreenState extends State<FindRideScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  dropLoc,
+                  pickupLoc,
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 16,
                   ),
                 ),
               ),
-              Text(dTime, style: AppTheme.subtitle),
+              Text(pTime, style: AppTheme.subtitle),
             ],
           ),
 
@@ -271,7 +280,15 @@ class _FindRideScreenState extends State<FindRideScreen> {
                 height: 42,
                 child: ElevatedButton(
                   style: AppTheme.primaryButton,
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => BookRideScreen(ride: ride),
+                      ),
+                    );
+                  },
+
                   child: const Text('Book Ride', style: AppTheme.buttonText),
                 ),
               ),
@@ -286,7 +303,7 @@ class _FindRideScreenState extends State<FindRideScreen> {
   Widget build(BuildContext context) {
     // Keep filter text dynamic layout friendly
     String dateText = selectedDate == null
-        ? '17 May, 2026'
+        ? DateTime.now().toString().split(' ')[0]
         : '${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}';
 
     String timeText = selectedTime == null
@@ -326,6 +343,8 @@ class _FindRideScreenState extends State<FindRideScreen> {
             const SizedBox(height: 18),
 
             // FILTERS
+
+            // FILTERS
             Row(
               children: [
                 filterCard(
@@ -342,8 +361,68 @@ class _FindRideScreenState extends State<FindRideScreen> {
               ],
             ),
 
+            const SizedBox(height: 12),
+
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: AppTheme.cardDecoration,
+              child: DropdownButton<int>(
+                value: requiredSeats,
+                hint: const Text('Seats Required'),
+                isExpanded: true,
+                underline: const SizedBox(),
+                items: [1, 2, 3, 4, 5]
+                    .map(
+                      (seat) => DropdownMenuItem(
+                        value: seat,
+                        child: Text('$seat Seat${seat > 1 ? 's' : ''}'),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    requiredSeats = value;
+                  });
+                },
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                style: AppTheme.primaryButton,
+                onPressed: () async {
+                  if (pickupController.text.trim().isEmpty ||
+                      dropController.text.trim().isEmpty ||
+                      selectedDate == null ||
+                      selectedTime == null ||
+                      requiredSeats == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Please fill all fields')),
+                    );
+                    return;
+                  }
+
+                  setState(() {
+                    isLoading = true;
+                  });
+
+                  await fetchRides();
+                },
+                child: const Text('Search Rides', style: AppTheme.buttonText),
+              ),
+            ),
+
             const SizedBox(height: 26),
+
             const Text('Available Rides', style: AppTheme.heading),
+
+            const SizedBox(height: 18),
+            // const SizedBox(height: 26),
+            // const Text('Available Rides', style: AppTheme.heading),
             const SizedBox(height: 18),
 
             // RIDES LIST (With network protection fallback checks)

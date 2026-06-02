@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../services/api_service.dart';
 import 'complete_profile_screen.dart';
-import 'home/home_screen.dart';
+import 'home_screen.dart';
 import 'otp_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MobileNumberScreen extends StatefulWidget {
   const MobileNumberScreen({super.key});
@@ -36,6 +37,9 @@ class _MobileNumberScreenState extends State<MobileNumberScreen> {
     });
 
     if (response['success']) {
+      final prefs = await SharedPreferences.getInstance();
+
+      await prefs.setString('token', response['token']);
       final user = response['user'];
 
       if (user['is_profile_completed']) {

@@ -6,7 +6,7 @@ import '../widgets/auth_header.dart';
 import '../widgets/common_button.dart';
 import '../widgets/common_textfield.dart';
 
-import 'home/home_screen.dart';
+import 'home_screen.dart';
 
 class CompleteProfileScreen extends StatefulWidget {
   final String phone;

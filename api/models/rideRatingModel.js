@@ -53,6 +53,14 @@ module.exports = (
     }
 
   );
+  RideRating.associate = (models) => {
+
+    RideRating.belongsTo(models.users, {
+    foreignKey: 'to_user_id',
+    as: 'user',
+  });
+
+  };
 
   return RideRating;
 

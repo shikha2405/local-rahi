@@ -1,10 +1,11 @@
 const db = require('../models');
 
 const Ride = db.rides;
-
+const moment = require('moment');
 const User = db.users;
 const RideBooking = db.ride_bookings;
-const { Op } = require('sequelize');
+const RideRating = db.rideRatings;
+const { Op, fn, col, literal } = require('sequelize');
 
 exports.offerRide = async (
   req,
@@ -53,7 +54,10 @@ exports.offerRide = async (
       });
 
     }
-
+    const formattedTime = moment(
+      trip_time,
+      'h:mm A'
+    ).format('HH:mm:ss');
     const ride =
       await Ride.create({
 
@@ -65,10 +69,10 @@ exports.offerRide = async (
 
         trip_date,
 
-        trip_time,
+        trip_time: formattedTime,
 
-        total_seats: availableSeats,
-        available_seats: availableSeats,
+        total_seats: available_seats,
+        available_seats: available_seats,
 
         price_per_seat,
 
@@ -174,29 +178,42 @@ async (req, res) => {
 };
 
 exports.findRides = async (req, res) => {
+
   try {
+
     const { pickup, drop } = req.query;
 
     const where = {
       status: 'active',
+
+      trip_date: {
+        [Op.gte]: new Date(),
+      },
     };
 
     if (pickup) {
+
       where.pickup_location = {
         [Op.like]: `%${pickup}%`,
       };
+
     }
 
     if (drop) {
+
       where.drop_location = {
         [Op.like]: `%${drop}%`,
       };
+
     }
+     console.log('Ride Associations:', Object.keys(Ride.associations));
 
     const rides = await Ride.findAll({
+
       where,
 
       include: [
+
         {
           model: User,
           as: 'user',
@@ -208,23 +225,90 @@ exports.findRides = async (req, res) => {
             'phone',
             'email',
           ],
+
+          include: [
+
+            {
+              model: RideRating,
+              as: 'rideRating',
+              attributes: [],
+            },
+            {
+              model: Ride,
+              as: 'rides',
+
+              attributes: [],
+
+              where: {
+                status: 'completed',
+              },
+
+              required: false,
+            },
+          ],
         },
+      ],
+
+      attributes: {
+
+        include: [
+
+          [
+            fn(
+              'ROUND',
+              fn(
+                'AVG',
+                col('user.rideRating.rating')
+              ),
+              1
+            ),
+            'average_rating',
+          ],
+
+          [
+            fn(
+              'COUNT',
+              col('user.rideRating.id')
+            ),
+            'total_reviews',
+          ],
+
+          [
+            fn(
+              'COUNT',
+              col('user.rides.id')
+            ),
+            'total_completed_rides',
+          ],
+        ],
+      },
+
+      group: [
+        'Ride.id',
+        'user.id',
       ],
 
       order: [['id', 'DESC']],
     });
 
     res.status(200).json({
+
       success: true,
       data: rides,
+
     });
+
   } catch (error) {
+
     console.log(error);
 
     res.status(500).json({
+
       success: false,
       message: 'Failed to fetch rides',
+
     });
+
   }
 };
 

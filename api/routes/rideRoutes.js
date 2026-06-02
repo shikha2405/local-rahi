@@ -1,9 +1,9 @@
 const express =
 require('express');
-
+const auth = require('../middleware/auth');
 const router =
 express.Router();
-
+router.use(auth);
 const {
   offerRide,
   getMyRides,
@@ -14,6 +14,7 @@ const {
   '../controllers/rideController'
 );
 
+router.get('/find-rides', findRides);
 router.post(
   '/offer',
   offerRide
@@ -32,5 +33,4 @@ router.put(
   startRide
 );
 
-router.get('/find-rides', findRides);
 module.exports = router;

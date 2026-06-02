@@ -19,6 +19,7 @@ db.users = require('./userModel')(sequelize, DataTypes);
 db.rides = require('./rideModel')(sequelize, DataTypes);
 db.ride_bookings = require('./rideBookingModel')(sequelize, DataTypes);
 db.rideRatings = require('./rideRatingModel')(sequelize,DataTypes);
+db.notifications = require('./notificationModel')(sequelize,DataTypes);
 Object.keys(db).forEach((modelName) => {
 
   if (db[modelName].associate) {
@@ -26,6 +27,7 @@ Object.keys(db).forEach((modelName) => {
     db[modelName].associate(db);
 
   }
+  console.log(Object.keys(db.notifications.associations));
 
 });
 

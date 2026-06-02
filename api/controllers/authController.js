@@ -90,7 +90,7 @@ exports.verifyOtp = async (req, res) => {
     const token = jwt.sign(
       { id: user.id },
       process.env.JWT_SECRET,
-      { expiresIn: '30d' }
+      { expiresIn: '2d' }
     );
 
     await user.update({
@@ -222,9 +222,14 @@ exports.loginWithPassword = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user.id },
+      {
+        id: user.id,
+        mobile: user.mobile
+      },
       process.env.JWT_SECRET,
-      { expiresIn: '30d' }
+      {
+        expiresIn: '2d'
+      }
     );
 
     return res.status(200).json({

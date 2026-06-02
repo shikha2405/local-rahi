@@ -73,6 +73,23 @@ class _OtpScreenState extends State<OtpScreen> {
 
                     await prefs.setString('phone', widget.phone);
 
+                    await prefs.setInt('user_id', response['user']['id']);
+
+                    await prefs.setString(
+                      'first_name',
+                      response['user']['first_name'] ?? '',
+                    );
+
+                    await prefs.setString(
+                      'last_name',
+                      response['user']['last_name'] ?? '',
+                    );
+
+                    await prefs.setString(
+                      'email',
+                      response['user']['email'] ?? '',
+                    );
+
                     // Navigator.push(
                     //   context,
                     //   MaterialPageRoute(

@@ -6,6 +6,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ApiService {
   static const String baseUrl = 'http://localhost:5000/api';
 
+  static Future<Map<String, String>> getAuthHeaders() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final token = prefs.getString('token');
+
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    };
+  }
+
   static Future<Map<String, dynamic>> sendOtp(String phone) async {
     final response = await http.post(
       Uri.parse('$baseUrl/auth/send-otp'),
@@ -40,10 +51,11 @@ class ApiService {
     required String email,
     required String password,
   }) async {
+    final headers = await getAuthHeaders();
     final response = await http.post(
       Uri.parse('$baseUrl/auth/complete-profile'),
 
-      headers: {'Content-Type': 'application/json'},
+      headers: headers,
 
       body: jsonEncode({
         'phone': phone,
@@ -90,11 +102,11 @@ class ApiService {
     final prefs = await SharedPreferences.getInstance();
 
     final phone = prefs.getString('phone');
-
+    final headers = await getAuthHeaders();
     final response = await http.post(
       Uri.parse('$baseUrl/rides/offer'),
 
-      headers: {'Content-Type': 'application/json'},
+      headers: headers,
 
       body: jsonEncode({
         'phone': phone,
@@ -122,9 +134,10 @@ class ApiService {
     final prefs = await SharedPreferences.getInstance();
 
     final phone = prefs.getString('phone');
-
+    final headers = await getAuthHeaders();
     final response = await http.get(
       Uri.parse('$baseUrl/rides/my-rides/$phone'),
+      headers: headers,
     );
 
     final data = jsonDecode(response.body);
@@ -133,8 +146,10 @@ class ApiService {
   }
 
   static Future<List<dynamic>> searchPlaces(String input) async {
+    final headers = await getAuthHeaders();
     final response = await http.get(
       Uri.parse('$baseUrl/places/autocomplete?input=$input'),
+      headers: headers,
     );
 
     final data = jsonDecode(response.body);
@@ -148,10 +163,63 @@ class ApiService {
   }) async {
     final response = await http.get(
       Uri.parse('$baseUrl/rides/find-rides?pickup=$pickup&drop=$drop'),
+      headers: await getAuthHeaders(),
     );
 
     final data = jsonDecode(response.body);
 
     return data['data'];
+  }
+
+  static Future<Map<String, dynamic>> rideBooking({
+    required int rideId,
+    required int passengerId,
+    required int seatsBooked,
+    String bookingNote = '',
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/ride-bookings'),
+      headers: await getAuthHeaders(),
+      body: jsonEncode({
+        'ride_id': rideId,
+        'passenger_id': passengerId,
+        'seats_booked': seatsBooked,
+        'booking_note': bookingNote,
+      }),
+    );
+
+    final data = jsonDecode(response.body);
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return data;
+    } else {
+      throw Exception(data['message'] ?? 'Failed to book ride');
+    }
+  }
+
+  static Future<List<dynamic>> getNotifications(int userId) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/notifications/$userId'),
+      headers: await getAuthHeaders(),
+    );
+
+    final data = jsonDecode(response.body);
+
+    if (response.statusCode == 200 && data['success'] == true) {
+      return data['data'];
+    } else {
+      throw Exception(data['message'] ?? 'Failed to load notifications');
+    }
+  }
+
+  static Future<int> getNotificationCount(int userId) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/notifications/unread-count/$userId'),
+      headers: await getAuthHeaders(),
+    );
+
+    final data = jsonDecode(response.body);
+
+    return data['count'] ?? 0;
   }
 }
