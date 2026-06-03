@@ -4,7 +4,7 @@ const router = express.Router();
 
 const axios = require('axios');
 
-const GOOGLE_API_KEY = 'AIzaSyBNZZaKMouX8HmW258j0g6UR-VoLFm4Zeo';
+const GOOGLE_API_KEY = '';
 
 const auth = require('../middleware/auth');
 

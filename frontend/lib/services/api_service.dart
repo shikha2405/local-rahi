@@ -1,5 +1,5 @@
 import 'dart:convert';
-
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -160,9 +160,17 @@ class ApiService {
   static Future<List<dynamic>> findRides({
     String pickup = '',
     String drop = '',
+    DateTime? date,
+    TimeOfDay? time,
+    int seats = 1,
   }) async {
+    final queryDate = date ?? DateTime.now();
+    final queryTime = time ?? TimeOfDay.now();
+    print(queryTime);
     final response = await http.get(
-      Uri.parse('$baseUrl/rides/find-rides?pickup=$pickup&drop=$drop'),
+      Uri.parse(
+        '$baseUrl/rides/find-rides?pickup=$pickup&drop=$drop&date=$queryDate&time=$queryTime&seats=$seats',
+      ),
       headers: await getAuthHeaders(),
     );
 

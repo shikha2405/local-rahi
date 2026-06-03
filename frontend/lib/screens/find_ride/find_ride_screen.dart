@@ -14,10 +14,8 @@ class _FindRideScreenState extends State<FindRideScreen> {
   final pickupController = TextEditingController();
   final dropController = TextEditingController();
   int? requiredSeats;
-
   DateTime? selectedDate;
   TimeOfDay? selectedTime;
-
   List rides = [];
   bool isLoading = true;
 
@@ -48,9 +46,9 @@ class _FindRideScreenState extends State<FindRideScreen> {
       final data = await ApiService.findRides(
         pickup: pickupController.text,
         drop: dropController.text,
-        //date: pickDate,
-        // time: selectedTime!.format(context),
-        // seats: requiredSeats!,
+        date: selectedDate,
+        time: selectedTime,
+        seats: requiredSeats!,
       );
 
       if (!mounted) return;
@@ -76,6 +74,7 @@ class _FindRideScreenState extends State<FindRideScreen> {
     );
 
     if (picked != null) {
+      print('Selected date: $picked');
       setState(() {
         selectedDate = picked;
       });
@@ -89,6 +88,7 @@ class _FindRideScreenState extends State<FindRideScreen> {
     );
 
     if (picked != null) {
+      print('Selected time: $picked');
       setState(() {
         selectedTime = picked;
       });

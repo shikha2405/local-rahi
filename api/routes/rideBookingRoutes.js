@@ -1,5 +1,7 @@
 const express = require('express');
 
+const auth = require('../middleware/auth');
+
 const router = express.Router();
 
 const {
@@ -16,6 +18,7 @@ const {
 
 } = require('../controllers/rideBookingController');
 
+router.use(auth);
 router.post('/', bookRide);
 
 router.get(

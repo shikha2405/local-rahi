@@ -181,7 +181,7 @@ exports.findRides = async (req, res) => {
 
   try {
 
-    const { pickup, drop } = req.query;
+    const { pickup, drop, date, time, seats } = req.query;
 
     const where = {
       status: 'active',
@@ -206,7 +206,34 @@ exports.findRides = async (req, res) => {
       };
 
     }
-     console.log('Ride Associations:', Object.keys(Ride.associations));
+
+    if (date) {
+      console.log('Filtering by date:', new Date(date));
+      where.trip_date = {
+        [Op.eq]: new Date(date),
+      };
+
+    }
+
+    // if (time) {
+    //   where.trip_time = {
+    //       [Op.eq]: moment(
+    //       time,
+    //       'h:mm A'
+    //     ).format('HH:mm:ss'),
+    //   };
+
+    // }
+
+    if (seats) {
+
+      where.available_seats = {
+        [Op.gte]: parseInt(seats),
+      };
+
+    }
+
+    console.log('Ride Associations:', Object.keys(Ride.associations));
 
     const rides = await Ride.findAll({
 
