@@ -57,6 +57,51 @@ module.exports = (
         allowNull: true,
       },
 
+      via_location: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+
+      trip_type: {
+        type: DataTypes.ENUM('one_way', 'round_trip'),
+        defaultValue: 'one_way',
+      },
+
+      is_flexible_time: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
+
+      availability: {
+        type: DataTypes.ENUM('only_this_time', 'repeat_daily', 'repeat_weekly', 'custom_schedule'),
+        defaultValue: 'only_this_time',
+      },
+
+      vehicle_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+
+      preferences_smoking: {
+        type: DataTypes.ENUM('allowed', 'not_allowed'),
+        defaultValue: 'not_allowed',
+      },
+
+      preferences_music: {
+        type: DataTypes.ENUM('allowed', 'not_allowed'),
+        defaultValue: 'allowed',
+      },
+
+      preferences_pets: {
+        type: DataTypes.ENUM('allowed', 'not_allowed'),
+        defaultValue: 'not_allowed',
+      },
+
+      preferences_luggage: {
+        type: DataTypes.ENUM('small', 'medium', 'large'),
+        defaultValue: 'medium',
+      },
+
       status: {
         type: DataTypes.ENUM(
           'active',
@@ -93,6 +138,10 @@ module.exports = (
     Ride.hasMany(models.rideRatings, {
       foreignKey: 'ride_id',
       as: 'rideRatings',
+    });
+    Ride.belongsTo(models.vehicles, {
+      foreignKey: 'vehicle_id',
+      as: 'vehicle',
     });
 
   };

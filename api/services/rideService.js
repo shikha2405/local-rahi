@@ -25,6 +25,8 @@ class RideService {
       is_flexible_time,
       availability,
       vehicle,
+      vehicle_id,
+      preferences,
     } = body;
 
     const user = await userRepository.findByPhone(phone);
@@ -32,19 +34,59 @@ class RideService {
       throw new Error('User not found');
     }
 
-    let vehicle_id = null;
+    let finalVehicleId = null;
     if (vehicle) {
       const { name, plate_number, type, seats } = vehicle;
+      if (!name || !plate_number || !type || !seats) {
+        throw new Error('All vehicle fields (name, plate_number, type, seats) are required');
+      }
       const [vehicleRecord] = await vehicleRepository.findOrCreate({
         where: { user_id: user.id, plate_number },
         defaults: { name, type, seats }
       });
-      vehicle_id = vehicleRecord.id;
+      finalVehicleId = vehicleRecord.id;
+    } else if (vehicle_id) {
+      const dbVehicle = await vehicleRepository.findById(vehicle_id);
+      if (!dbVehicle || dbVehicle.user_id !== user.id) {
+        throw new Error('Selected vehicle not found or does not belong to user');
+      }
+      finalVehicleId = dbVehicle.id;
+    } else {
+      // Check if user has any vehicle registered
+      const userVehicles = await vehicleRepository.findAll({ where: { user_id: user.id } });
+      if (userVehicles.length === 0) {
+        throw new Error('No vehicle registered. Please add a vehicle first.');
+      }
+      // Default to the first vehicle
+      finalVehicleId = userVehicles[0].id;
     }
 
-    const formattedTime = moment(trip_time, 'HH:mm').isValid()
-      ? moment(trip_time, 'HH:mm').format('HH:mm:ss')
-      : moment(trip_time, 'h:mm A').format('HH:mm:ss');
+    // Resolve preferences
+    const pref_smoking = preferences?.smoking || 'not_allowed';
+    const pref_music = preferences?.music || 'allowed';
+    const pref_pets = preferences?.pets || 'not_allowed';
+    const pref_luggage = preferences?.luggage || 'medium';
+
+    // Parse trip_time
+    let formattedTime = null;
+    if (trip_time) {
+      const match = trip_time.match(/TimeOfDay\((\d{1,2}):(\d{2})\)/);
+      if (match) {
+        const hour = match[1].padStart(2, '0');
+        const minute = match[2];
+        formattedTime = `${hour}:${minute}:00`;
+      } else {
+        formattedTime = moment(trip_time, 'HH:mm').isValid()
+          ? moment(trip_time, 'HH:mm').format('HH:mm:ss')
+          : moment(trip_time, 'h:mm A').isValid()
+            ? moment(trip_time, 'h:mm A').format('HH:mm:ss')
+            : null;
+      }
+    }
+
+    if (!formattedTime) {
+      throw new Error('Invalid trip time format');
+    }
 
     return await rideRepository.create({
       user_id: user.id,
@@ -57,10 +99,14 @@ class RideService {
       available_seats: available_seats,
       price_per_seat,
       ride_note,
-      trip_type,
-      is_flexible_time,
-      availability,
-      vehicle_id,
+      trip_type: trip_type || 'one_way',
+      is_flexible_time: is_flexible_time !== undefined ? is_flexible_time : false,
+      availability: availability || 'only_this_time',
+      vehicle_id: finalVehicleId,
+      preferences_smoking: pref_smoking,
+      preferences_music: pref_music,
+      preferences_pets: pref_pets,
+      preferences_luggage: pref_luggage,
     });
   }
 
@@ -179,25 +225,60 @@ class RideService {
     const {
       pickup_location,
       drop_location,
+      via_location,
       trip_date,
       trip_time,
       available_seats,
       price_per_seat,
       ride_note,
+      trip_type,
+      is_flexible_time,
+      availability,
+      vehicle_id,
+      preferences,
     } = data;
 
     if (pickup_location !== undefined) ride.pickup_location = pickup_location;
     if (drop_location !== undefined) ride.drop_location = drop_location;
+    if (via_location !== undefined) ride.via_location = via_location;
     if (trip_date !== undefined) ride.trip_date = trip_date;
+    
     if (trip_time !== undefined) {
-      ride.trip_time = moment(trip_time, 'h:mm A').format('HH:mm:ss');
+      let formattedTime = null;
+      const match = trip_time.match(/TimeOfDay\((\d{1,2}):(\d{2})\)/);
+      if (match) {
+        const hour = match[1].padStart(2, '0');
+        const minute = match[2];
+        formattedTime = `${hour}:${minute}:00`;
+      } else {
+        formattedTime = moment(trip_time, 'HH:mm').isValid()
+          ? moment(trip_time, 'HH:mm').format('HH:mm:ss')
+          : moment(trip_time, 'h:mm A').isValid()
+            ? moment(trip_time, 'h:mm A').format('HH:mm:ss')
+            : null;
+      }
+      if (formattedTime) {
+        ride.trip_time = formattedTime;
+      }
     }
+
     if (available_seats !== undefined) {
       ride.total_seats = available_seats;
       ride.available_seats = available_seats;
     }
     if (price_per_seat !== undefined) ride.price_per_seat = price_per_seat;
     if (ride_note !== undefined) ride.ride_note = ride_note;
+    if (trip_type !== undefined) ride.trip_type = trip_type;
+    if (is_flexible_time !== undefined) ride.is_flexible_time = is_flexible_time;
+    if (availability !== undefined) ride.availability = availability;
+    if (vehicle_id !== undefined) ride.vehicle_id = vehicle_id;
+
+    if (preferences) {
+      if (preferences.smoking !== undefined) ride.preferences_smoking = preferences.smoking;
+      if (preferences.music !== undefined) ride.preferences_music = preferences.music;
+      if (preferences.pets !== undefined) ride.preferences_pets = preferences.pets;
+      if (preferences.luggage !== undefined) ride.preferences_luggage = preferences.luggage;
+    }
 
     await ride.save();
     return ride;
@@ -209,6 +290,25 @@ class RideService {
       throw new Error('User not found');
     }
     return await vehicleRepository.findAll({ where: { user_id: user.id } });
+  }
+
+  async addVehicle(phone, vehicleData) {
+    const user = await userRepository.findByPhone(phone);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const { name, plate_number, type, seats } = vehicleData;
+    if (!name || !plate_number || !type || !seats) {
+      throw new Error('All vehicle fields (name, plate_number, type, seats) are required');
+    }
+
+    const [vehicleRecord] = await vehicleRepository.findOrCreate({
+      where: { user_id: user.id, plate_number },
+      defaults: { name, type, seats }
+    });
+
+    return vehicleRecord;
   }
 }
 

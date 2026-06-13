@@ -144,3 +144,21 @@ exports.getUserVehicles = async (req, res) => {
     });
   }
 };
+
+exports.addVehicle = async (req, res) => {
+  try {
+    const { phone } = req.body;
+    const vehicle = await rideService.addVehicle(phone, req.body);
+    return res.status(201).json({
+      success: true,
+      message: 'Vehicle added successfully',
+      data: vehicle,
+    });
+  } catch (error) {
+    const isValidationError = error.message.includes('required');
+    return res.status(isValidationError ? 400 : 500).json({
+      success: false,
+      message: error.message || 'Failed to add vehicle',
+    });
+  }
+};

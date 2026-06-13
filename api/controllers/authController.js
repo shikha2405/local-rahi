@@ -84,3 +84,36 @@ exports.loginWithPassword = async (req, res) => {
     });
   }
 };
+
+exports.register = async (req, res) => {
+  try {
+    const { phone, first_name, last_name, email, password } = req.body;
+    const { token, user } = await authService.register({ phone, first_name, last_name, email, password });
+    return res.status(201).json({
+      success: true,
+      message: 'User registered successfully',
+      token,
+      user: {
+        id: user.id,
+        phone: user.phone,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        email: user.email,
+        is_profile_completed: user.is_profile_completed,
+      },
+    });
+  } catch (error) {
+    const isValidationError = error.message.includes('required');
+    return res.status(isValidationError ? 400 : 500).json({
+      success: false,
+      message: error.message || 'Registration failed',
+    });
+  }
+};
+
+exports.logout = async (req, res) => {
+  return res.status(200).json({
+    success: true,
+    message: 'Logged out successfully'
+  });
+};

@@ -17,6 +17,7 @@ db.sequelize = sequelize;
 
 db.users = require('./userModel')(sequelize, DataTypes);
 db.rides = require('./rideModel')(sequelize, DataTypes);
+db.vehicles = require('./vehicleModel')(sequelize, DataTypes);
 db.ride_bookings = require('./rideBookingModel')(sequelize, DataTypes);
 db.rideRatings = require('./rideRatingModel')(sequelize,DataTypes);
 db.notifications = require('./notificationModel')(sequelize,DataTypes);

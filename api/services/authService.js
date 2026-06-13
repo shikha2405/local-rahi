@@ -71,6 +71,42 @@ class AuthService {
     return true;
   }
 
+  async register({ phone, first_name, last_name, email, password }) {
+    if (!phone || !password || !first_name || !last_name || !email) {
+      throw new Error('All registration fields (phone, password, first_name, last_name, email) are required');
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    let user = await userRepository.findByPhone(phone);
+    if (!user) {
+      user = await userRepository.create({
+        phone,
+        first_name,
+        last_name,
+        email,
+        password: hashedPassword,
+        is_profile_completed: true,
+        mobile_verified: true,
+      });
+    } else {
+      await userRepository.update(user, {
+        first_name,
+        last_name,
+        email,
+        password: hashedPassword,
+        is_profile_completed: true,
+      });
+    }
+
+    const token = jwt.sign(
+      { id: user.id },
+      process.env.JWT_SECRET,
+      { expiresIn: '2d' }
+    );
+
+    return { token, user };
+  }
+
   async loginWithPassword(phone, password) {
     const user = await userRepository.findByPhone(phone);
     if (!user) {

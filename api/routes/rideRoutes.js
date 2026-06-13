@@ -9,7 +9,11 @@ const {
   getMyRides,
   findRides,
   getRideDetails,
-  startRide
+  startRide,
+  cancelRide,
+  updateRide,
+  getUserVehicles,
+  addVehicle
 } = require(
   '../controllers/rideController'
 );
@@ -22,6 +26,22 @@ router.post(
 router.get(
   '/my-rides/:phone',
   getMyRides
+);
+router.get(
+  '/vehicles/:phone',
+  getUserVehicles
+);
+router.post(
+  '/vehicles',
+  addVehicle
+);
+router.put(
+  '/cancel/:ride_id',
+  cancelRide
+);
+router.put(
+  '/:ride_id',
+  updateRide
 );
 router.get(
   '/:ride_id',
