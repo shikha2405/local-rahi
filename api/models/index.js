@@ -20,6 +20,7 @@ db.rides = require('./rideModel')(sequelize, DataTypes);
 db.ride_bookings = require('./rideBookingModel')(sequelize, DataTypes);
 db.rideRatings = require('./rideRatingModel')(sequelize,DataTypes);
 db.notifications = require('./notificationModel')(sequelize,DataTypes);
+db.find_rides = require('./findRideModel')(sequelize,DataTypes);
 Object.keys(db).forEach((modelName) => {
 
   if (db[modelName].associate) {

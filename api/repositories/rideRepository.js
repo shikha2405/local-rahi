@@ -131,8 +131,13 @@ class RideRepository {
   }
 
   async upsertFindRide(payload) {
-     console.log('FindRide:', this.FindRide);
-    return this.FindRide.upsert(payload);
+    try {
+      console.log('Payload:', payload);
+      return await this.FindRide.upsert(payload);
+    } catch (err) {
+      console.error('UPSERT ERROR:', err);
+      throw err;
+    }
   }
 
 }
