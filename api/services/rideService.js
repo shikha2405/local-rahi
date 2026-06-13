@@ -4,8 +4,12 @@ const db = require('../models');
 const rideRepository = require('../repositories/rideRepository');
 const userRepository = require('../repositories/userRepository');
 const vehicleRepository = require('../repositories/vehicleRepository');
+const { parseTimeToSql } = require('../helper/timeHelper');
 
 class RideService {
+  constructor(rideRepository) {
+    this.rideRepository = rideRepository;
+  }
   async offerRide(body) {
     const {
       phone,
@@ -208,4 +212,4 @@ class RideService {
   }
 }
 
-module.exports = new RideService();
+module.exports = new RideService(rideRepository);

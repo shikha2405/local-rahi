@@ -2,8 +2,17 @@ const db = require('../models');
 const Ride = db.rides;
 const User = db.users;
 const RideBooking = db.ride_bookings;
+const { Op, fn, col } = require('sequelize');
+const moment = require('moment');
 
 class RideRepository {
+  constructor(models = db) {
+    this.Ride = models.rides;
+    this.User = models.users;
+    this.RideRating = models.rideRatings;
+    this.FindRide = models.find_rides;
+  }
+
   async create(data) {
     return await Ride.create(data);
   }
@@ -97,14 +106,15 @@ class RideRepository {
     if (seats) where.available_seats = { [Op.gte]: parseInt(seats, 10) };
 
     if (time) {
-      const { parseTimeToSql } = require('../core/timeHelper');
-      const sqlTime = parseTimeToSql(time);
-      if (sqlTime) where.trip_time = { [Op.eq]: sqlTime };
+      // const { parseTimeToSql } = require('../core/timeHelper');
+      // const sqlTime = parseTimeToSql(time);
+      //if (sqlTime) where.trip_time = { [Op.eq]: time };
+      where.trip_time = { [Op.eq]: time };
     }
 
     if (timeRangeFilter && time) {
       const range = parseInt(timeRangeFilter, 10);
-      const { parseTimeToSql } = require('../core/timeHelper');
+      const { parseTimeToSql } = require('../helper/timeHelper');
       const sqlTime = parseTimeToSql(time);
       if (sqlTime && range) {
         const base = moment(sqlTime, 'HH:mm:ss');
@@ -121,6 +131,7 @@ class RideRepository {
   }
 
   async upsertFindRide(payload) {
+     console.log('FindRide:', this.FindRide);
     return this.FindRide.upsert(payload);
   }
 
