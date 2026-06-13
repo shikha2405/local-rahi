@@ -36,7 +36,9 @@ exports.getMyRides = async (req, res) => {
 
 exports.findRides = async (req, res) => {
   try {
-    const rides = await rideService.findRides(req.query);
+    const userId = req.user?.id;
+    if (!userId) return ApiResponse.error(res, 'User not authenticated', 401);
+    const rides = await rideService.findRides(req.query, userId);
     return res.status(200).json({
       success: true,
       data: rides,
