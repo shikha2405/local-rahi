@@ -1,600 +1,144 @@
-const db = require('../models');
+const rideService = require('../services/rideService');
 
-const Ride = db.rides;
-const moment = require('moment');
-const User = db.users;
-const RideBooking = db.ride_bookings;
-const RideRating = db.rideRatings;
-const { Op, fn, col, literal } = require('sequelize');
-
-exports.offerRide = async (
-  req,
-  res
-) => {
-
+exports.offerRide = async (req, res) => {
   try {
-
-    const {
-
-      phone,
-
-      pickup_location,
-
-      drop_location,
-
-      trip_date,
-
-      trip_time,
-
-      available_seats,
-
-      price_per_seat,
-
-      ride_note,
-
-    } = req.body;
-
-    const user =
-      await User.findOne({
-
-      where: { phone }
-
-    });
-
-    if (!user) {
-
-      return res.status(404)
-          .json({
-
-        success: false,
-
-        message:
-            'User not found',
-
-      });
-
-    }
-    const formattedTime = moment(
-      trip_time,
-      'h:mm A'
-    ).format('HH:mm:ss');
-    const ride =
-      await Ride.create({
-
-        user_id: user.id,
-
-        pickup_location,
-
-        drop_location,
-
-        trip_date,
-
-        trip_time: formattedTime,
-
-        total_seats: available_seats,
-        available_seats: available_seats,
-
-        price_per_seat,
-
-        ride_note,
-
-      });
-
+    const ride = await rideService.offerRide(req.body);
     return res.json({
-
       success: true,
-
-      message:
-          'Ride offered successfully',
-
+      message: 'Ride offered successfully',
       data: ride,
-
     });
-
   } catch (error) {
-
-    return res.status(500)
-        .json({
-
+    const isNotFound = error.message === 'User not found';
+    return res.status(isNotFound ? 404 : 500).json({
       success: false,
-
-      message:
-          'Server Error',
-
-      error: error.message,
-
+      message: error.message || 'Server Error',
     });
-
   }
-
 };
 
-exports.getMyRides =
-async (req, res) => {
-
+exports.getMyRides = async (req, res) => {
   try {
-
-    const { phone } =
-      req.params;
-
-    const user =
-      await User.findOne({
-
-      where: { phone }
-
-    });
-
-    if (!user) {
-
-      return res.status(404)
-          .json({
-
-        success: false,
-
-        message:
-          'User not found',
-
-      });
-
-    }
-
-    const rides =
-      await Ride.findAll({
-
-      where: {
-        user_id: user.id,
-      },
-
-      order: [
-        ['id', 'DESC']
-      ],
-
-    });
-
+    const { phone } = req.params;
+    const rides = await rideService.getMyRides(phone);
     return res.json({
-
       success: true,
-
       data: rides,
-
     });
-
   } catch (error) {
-
-    return res.status(500)
-        .json({
-
+    const isNotFound = error.message === 'User not found';
+    return res.status(isNotFound ? 404 : 500).json({
       success: false,
-
-      message:
-          'Server Error',
-
-      error: error.message,
-
+      message: error.message || 'Server Error',
     });
-
   }
-
 };
 
 exports.findRides = async (req, res) => {
-
   try {
-
-    const { pickup, drop, date, time, seats } = req.query;
-
-    const where = {
-      status: 'active',
-
-      trip_date: {
-        [Op.gte]: new Date(),
-      },
-    };
-
-    if (pickup) {
-
-      where.pickup_location = {
-        [Op.like]: `%${pickup}%`,
-      };
-
-    }
-
-    if (drop) {
-
-      where.drop_location = {
-        [Op.like]: `%${drop}%`,
-      };
-
-    }
-
-    if (date) {
-      console.log('Filtering by date:', new Date(date));
-      where.trip_date = {
-        [Op.eq]: new Date(date),
-      };
-
-    }
-
-    // if (time) {
-    //   where.trip_time = {
-    //       [Op.eq]: moment(
-    //       time,
-    //       'h:mm A'
-    //     ).format('HH:mm:ss'),
-    //   };
-
-    // }
-
-    if (seats) {
-
-      where.available_seats = {
-        [Op.gte]: parseInt(seats),
-      };
-
-    }
-
-    console.log('Ride Associations:', Object.keys(Ride.associations));
-
-    const rides = await Ride.findAll({
-
-      where,
-
-      include: [
-
-        {
-          model: User,
-          as: 'user',
-
-          attributes: [
-            'id',
-            'first_name',
-            'last_name',
-            'phone',
-            'email',
-          ],
-
-          include: [
-
-            {
-              model: RideRating,
-              as: 'rideRating',
-              attributes: [],
-            },
-            {
-              model: Ride,
-              as: 'rides',
-
-              attributes: [],
-
-              where: {
-                status: 'completed',
-              },
-
-              required: false,
-            },
-          ],
-        },
-      ],
-
-      attributes: {
-
-        include: [
-
-          [
-            fn(
-              'ROUND',
-              fn(
-                'AVG',
-                col('user.rideRating.rating')
-              ),
-              1
-            ),
-            'average_rating',
-          ],
-
-          [
-            fn(
-              'COUNT',
-              col('user.rideRating.id')
-            ),
-            'total_reviews',
-          ],
-
-          [
-            fn(
-              'COUNT',
-              col('user.rides.id')
-            ),
-            'total_completed_rides',
-          ],
-        ],
-      },
-
-      group: [
-        'Ride.id',
-        'user.id',
-      ],
-
-      order: [['id', 'DESC']],
-    });
-
-    res.status(200).json({
-
+    const rides = await rideService.findRides(req.query);
+    return res.status(200).json({
       success: true,
       data: rides,
-
     });
-
   } catch (error) {
-
-    console.log(error);
-
-    res.status(500).json({
-
+    const isValidationError = 
+      error.message === 'pickup and drop locations are required' ||
+      error.message === 'pickup is required' ||
+      error.message === 'drop is required';
+    return res.status(isValidationError ? 400 : 500).json({
       success: false,
-      message: 'Failed to fetch rides',
-
+      message: error.message || 'Failed to fetch rides',
     });
-
   }
 };
 
-//Ride Details Api with Bookings and Driver Info
 exports.getRideDetails = async (req, res) => {
-
   try {
-
     const { ride_id } = req.params;
-
-    const ride = await Ride.findOne({
-
-      where: {
-        id: ride_id,
-      },
-
-      include: [
-
-        {
-          model: User,
-          as: 'user',
-
-          attributes: [
-            'id',
-            'first_name',
-            'last_name',
-            'phone',
-            'email',
-          ],
-        },
-
-        {
-          model: RideBooking,
-          as: 'bookings',
-
-          include: [
-
-            {
-              model: User,
-              as: 'passenger',
-
-              attributes: [
-                'id',
-                'first_name',
-                'last_name',
-                'phone',
-                'email',
-              ],
-            },
-
-          ],
-
-        },
-
-      ],
-
-    });
-
-    if (!ride) {
-
-      return res.status(404).json({
-
-        success: false,
-        message: 'Ride not found',
-
-      });
-
-    }
-
-    // TOTAL BOOKED SEATS
-
-    let totalBookedSeats = 0;
-
-    ride.bookings.forEach((booking) => {
-
-      if (booking.booking_status === 'accepted') {
-
-        totalBookedSeats += booking.seats_booked;
-
-      }
-
-    });
-
-    // FORMAT BOOKINGS
-
-    const formattedBookings = ride.bookings.map((booking) => {
-
-      return {
-
-        id: booking.id,
-
-        seats_booked: booking.seats_booked,
-
-        booking_status: booking.booking_status,
-
-        booking_note: booking.booking_note,
-
-        created_at: booking.created_at,
-
-        passenger: booking.passenger,
-
-      };
-
-    });
-
-    // FINAL RESPONSE
-
-    res.status(200).json({
-
+    const details = await rideService.getRideDetails(ride_id);
+    return res.status(200).json({
       success: true,
-
-      data: {
-
-        ride: {
-
-          id: ride.id,
-
-          pickup_location:
-            ride.pickup_location,
-
-          drop_location:
-            ride.drop_location,
-
-          trip_date:
-            ride.trip_date,
-
-          trip_time:
-            ride.trip_time,
-
-          available_seats:
-            ride.available_seats,
-          
-
-          price_per_seat:
-            ride.price_per_seat,
-
-          ride_note:
-            ride.ride_note,
-
-          status:
-            ride.status,
-
-          created_at:
-            ride.createdAt,
-
-        },
-
-        driver: ride.user,
-
-        bookings: formattedBookings,
-
-        total_booked_seats:
-          totalBookedSeats,
-        total_seats: ride.total_seats,
-
-        booked_seats:
-          ride.total_seats - ride.available_seats,
-
-        remaining_seats:
-          ride.available_seats,
-
-
-      },
-
+      data: details,
     });
-
   } catch (error) {
-
-    console.log(error);
-
-    res.status(500).json({
-
+    const isNotFound = error.message === 'Ride not found';
+    return res.status(isNotFound ? 404 : 500).json({
       success: false,
-      message: 'Failed to fetch ride details',
-
+      message: error.message || 'Failed to fetch ride details',
     });
-
   }
-
 };
 
 exports.startRide = async (req, res) => {
-
   try {
-
     const { ride_id } = req.params;
-
-    const ride = await Ride.findByPk(ride_id);
-
-    if (!ride) {
-
-      return res.status(404).json({
-
-        success: false,
-        message: 'Ride not found',
-
-      });
-
-    }
-
-    // CHECK ALREADY STARTED
-
-    if (ride.status === 'started') {
-
-      return res.status(400).json({
-
-        success: false,
-        message: 'Ride already started',
-
-      });
-
-    }
-
-    // CHECK COMPLETED
-
-    if (ride.status === 'completed') {
-
-      return res.status(400).json({
-
-        success: false,
-        message: 'Ride already completed',
-
-      });
-
-    }
-
-    // Create Start Ride API
-
-    ride.status = 'started';
-
-    await ride.save();
-
-    res.status(200).json({
-
+    const ride = await rideService.startRide(ride_id);
+    return res.status(200).json({
       success: true,
-
       message: 'Ride started successfully',
-
       data: {
-
         ride_id: ride.id,
-
         ride_status: ride.status,
-
       },
-
     });
-
   } catch (error) {
-
-    console.log(error);
-
-    res.status(500).json({
-
+    const isNotFound = error.message === 'Ride not found';
+    return res.status(isNotFound ? 404 : 400).json({
       success: false,
-      message: 'Failed to start ride',
-
+      message: error.message || 'Failed to start ride',
     });
-
   }
+};
 
+exports.cancelRide = async (req, res) => {
+  try {
+    const { ride_id } = req.params;
+    await rideService.cancelRide(ride_id);
+    return res.json({
+      success: true,
+      message: 'Ride cancelled successfully',
+    });
+  } catch (error) {
+    const isNotFound = error.message === 'Ride not found';
+    return res.status(isNotFound ? 404 : 500).json({
+      success: false,
+      message: error.message || 'Server Error',
+    });
+  }
+};
+
+exports.updateRide = async (req, res) => {
+  try {
+    const { ride_id } = req.params;
+    const ride = await rideService.updateRide(ride_id, req.body);
+    return res.json({
+      success: true,
+      message: 'Ride updated successfully',
+      data: ride,
+    });
+  } catch (error) {
+    const isNotFound = error.message === 'Ride not found';
+    return res.status(isNotFound ? 404 : 500).json({
+      success: false,
+      message: error.message || 'Server Error',
+    });
+  }
+};
+
+exports.getUserVehicles = async (req, res) => {
+  try {
+    const { phone } = req.params;
+    const vehicles = await rideService.getUserVehicles(phone);
+    return res.json({
+      success: true,
+      data: vehicles,
+    });
+  } catch (error) {
+    const isNotFound = error.message === 'User not found';
+    return res.status(isNotFound ? 404 : 500).json({
+      success: false,
+      message: error.message || 'Server Error',
+    });
+  }
 };

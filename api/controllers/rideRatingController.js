@@ -1,141 +1,44 @@
-const {
-  rideRatings: RideRating,
-} = require('../models');
-
-
-// GIVE RATING AND REVIEW TO DRIVER OR PASSENGER
+const ratingService = require('../services/ratingService');
 
 exports.giveRideRating = async (req, res) => {
-
   try {
-
-    const {
+    const { ride_id, from_user_id, to_user_id, rating, review, rating_type } = req.body;
+    const newRating = await ratingService.giveRideRating({
       ride_id,
       from_user_id,
       to_user_id,
       rating,
       review,
       rating_type,
-    } = req.body;
-
-    const alreadyRated =
-      await RideRating.findOne({
-
-        where: {
-          ride_id,
-          from_user_id,
-          to_user_id,
-        },
-
-      });
-
-    if (alreadyRated) {
-
-      return res.status(400).json({
-
-        success: false,
-        message: 'Rating already submitted',
-
-      });
-
-    }
-
-    const newRating =
-      await RideRating.create({
-
-        ride_id,
-        from_user_id,
-        to_user_id,
-        rating,
-        review,
-        rating_type,
-
-      });
-
-    res.status(201).json({
-
+    });
+    return res.status(201).json({
       success: true,
       message: 'Rating submitted successfully',
       data: newRating,
-
     });
-
   } catch (error) {
-
-    console.log(error);
-
-    res.status(500).json({
-
+    const isAlreadySubmitted = error.message === 'Rating already submitted';
+    return res.status(isAlreadySubmitted ? 400 : 500).json({
       success: false,
-      message: 'Failed to submit rating',
-
+      message: error.message || 'Failed to submit rating',
     });
-
   }
-
 };
 
-
-// GET USER RATINGS Api
-
 exports.getUserRatings = async (req, res) => {
-
   try {
-
     const { user_id } = req.params;
-
-    const ratings =
-      await RideRating.findAll({
-
-        where: {
-          to_user_id: user_id,
-        },
-
-        order: [['id', 'DESC']],
-
-      });
-
-    let avgRating = 0;
-
-    if (ratings.length > 0) {
-
-      const total =
-        ratings.reduce((sum, item) => {
-
-          return sum + item.rating;
-
-        }, 0);
-
-      avgRating =
-        total / ratings.length;
-
-    }
-
-    res.status(200).json({
-
+    const result = await ratingService.getUserRatings(user_id);
+    return res.status(200).json({
       success: true,
-
-      average_rating:
-        avgRating.toFixed(1),
-
-      total_reviews:
-        ratings.length,
-
-      data: ratings,
-
+      average_rating: result.average_rating,
+      total_reviews: result.total_reviews,
+      data: result.ratings,
     });
-
   } catch (error) {
-
-    console.log(error);
-
-    res.status(500).json({
-
+    return res.status(500).json({
       success: false,
-      message: 'Failed to fetch ratings',
-
+      message: error.message || 'Failed to fetch ratings',
     });
-
   }
-
 };
